@@ -9,10 +9,10 @@ venv/
 .venv/
 env/
 
-# ===== Environment Variables (chứa API keys, secrets) =====
+# ===== Environment Variables =====
 .env
 
-# ===== Qdrant Storage (dữ liệu vector DB local) =====
+# ===== Qdrant Storage =====
 qdrant_storage/
 
 # ===== Logs =====
