@@ -1,8 +1,10 @@
 import logging
 import json
 from pathlib import Path
+from datetime import datetime, timezone
 
 from core.load_settings import load_settings
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -46,99 +48,79 @@ def chunk_company_info():
       continue
 
     company_name = info.get("companyName", "")
-    if not company_name or not isinstance(company_name, str):
-      logger.warning(f'Skipping company info with invalid name at index {idx} ')
-      continue
-
     company_slogan = info.get("companySlogan", "")
-    if not company_slogan or not isinstance(company_slogan, str):
-      logger.warning(f'Skipping company info with invalid slogan at index {idx}')
-      continue
-
     company_description = info.get("companyDescription", "")
-    if not company_description or not isinstance(company_description, str):
-      logger.warning(f'Skipping company info with invalid description at index {idx}')
-      continue
-
     company_hotlines = info.get("hotlines", [])
-    if not isinstance(company_hotlines, list):
-      logger.warning(f'Skipping company info with invalid hotlines at index {idx}')
-      continue
-
     company_emails = info.get("emails", [])
-    if not isinstance(company_emails, list):
-      logger.warning(f'Skipping company info with invalid emails at index {idx}')
-      continue
-
     company_main_address = info.get("mainAddress", "")
-    if not company_main_address or not isinstance(company_main_address, str):
-      logger.warning(f'Skipping company info with invalid main address at index{idx}')
-      continue
-
     company_working_hours = info.get("workingHours", "")
-    if not company_working_hours or not isinstance(company_working_hours, str):
-      logger.warning(f'Skipping company info with invalid working hours at index {idx}')
-      continue
-
     company_website = info.get("website", "")
-    if not company_website or not isinstance(company_website, str):
-      logger.warning(f'Skipping company info with invalid website at index {idx}')
-      continue
 
     company_social_links = info.get("socialLinks", {})
     if isinstance(company_social_links, dict):
       company_social_text = ", ".join([f"{key}: {value}" for key, value in company_social_links.items() if value])
 
     company_total_employees = info.get("totalEmployees")
-    if not company_total_employees or not isinstance(company_total_employees, int):
-      logger.warning(f'Skipping company info with invalid total employees at index {idx}')
-      continue
-
     company_total_projects = info.get("totalProjects")
-    if not company_total_projects or not isinstance(company_total_projects, int):
-      logger.warning(f'Skipping company info with invalid total projects at index {idx}')
-      continue
 
-    text_parts = [
-      f'Tên công ty: {company_name}',
-      f'Khẩu hiệu công ty {company_name}: {company_slogan}',
-      f'Mô tả công ty {company_name}: {company_description}',
-      f'Số điện thoại công ty {company_name}: {', '.join(company_hotlines)}',
-      f'Email liên hệ công ty {company_name}: {', '.join(company_emails)}',
-      f'Địa chỉ chính công ty {company_name}: {company_main_address}',
-      f'Giờ làm việc công ty {company_name}: {company_working_hours}',
-      f'Website công ty {company_name}: {company_website}',
-      f'Mạng xã hội công ty {company_name}: {company_social_text}',
-      f'Tổng số nhân viên công ty {company_name}: {company_total_employees}',
-      f'Tổng số dự án công ty {company_name}: {company_total_projects}'
-    ]
+    base_metadata = {
+      'type': 'company_info',
+      'source': 'companyInfo.json',
+      'company_name': company_name,
+      'created_at': datetime.now(timezone.utc).isoformat(),
+      'language': 'vi'
+    }
 
-    text = '\n'.join(text_parts)
+    CHUNK_PRIORITY = {
+      'overview': 1,
+      'contact_details': 2,
+      'social_links': 3,
+      'additional_info': 4
+    }
 
-    chunks.append({
-      "text": text,
-      "metadata":{
-        'type': 'company_info',
-        'source': 'companyInfo.json',
-        'company_name': company_name,
-        'company_slogan': company_slogan,
-        'company_description': company_description,
-        'company_hotlines': company_hotlines,
-        'company_emails': company_emails,
-        'company_main_address': company_main_address,
-        'company_working_hourse': company_working_hours,
-        'company_website': company_website,
-        'company_social_links': company_social_links,
-        'company_total_employees': company_total_employees,
-        'company_total_projects': company_total_projects
-      }
-      }
-    )
-  
-  if not chunks:
-    logger.warning("No valid company info chunks were created")
-    return []
+    if company_name and company_slogan and company_description:
+      chunks.append({
+        'text': f'Tên công ty: {company_name}\nKhẩu hiệu: {company_slogan}\nMô tả: {company_description}',
+        'metadata': make_metadata(base_metadata, chunk_type='overview', priority=CHUNK_PRIORITY['overview'])
+      })
 
+    if company_hotlines or company_emails or company_working_hours or company_main_address:
+      text_parts = []
+      if company_hotlines:
+        text_parts.append(f'Số điện thoại liên hệ: {', '.join(company_hotlines)}')
+      if company_emails:
+        text_parts.append(f'Email liên hệ: {', '.join(company_emails)}')
+      if company_working_hours:
+        text_parts.append(f'Giờ làm việc: {company_working_hours}')
+      if company_main_address:
+        text_parts.append(f'Địa chỉ chính: {company_main_address}')
+      chunks.append({
+        'text': text_parts,
+        'metadata': make_metadata(base_metadata, chunk_type='contact_details', priority=CHUNK_PRIORITY["contact_details"])
+      })
+    
+    if company_social_links or company_website:
+      text_parts = []
+      if company_website:
+        text_parts.append(f'Website: {company_website}')
+      if company_social_links:
+        text_parts.append(f'Mạng xã hội: {company_social_text}')
+      chunks.append({
+        'text': text_parts,
+        'metadata': make_metadata(base_metadata, chunk_type='social_links', priority=CHUNK_PRIORITY['social_links'])
+      })
+
+    if company_total_employees or company_total_projects:
+      text_parts = []
+      if company_total_employees:
+        text_parts.append(f'Tổng số nhân viên: {company_total_employees}')
+      if company_total_projects:
+        text_parts.append(f'Tổng số dự án: {company_total_projects}')
+      chunks.append({
+        'text': text_parts,
+        'metadata': make_metadata(base_metadata, chunk_type='additional_info', priority=CHUNK_PRIORITY['additional_info'])
+      })
+    
   return chunks
 
 

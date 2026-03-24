@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 from core.load_settings import load_settings
-from ingestion.helper.make_metadata import make_metadata
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -59,6 +59,16 @@ def chunk_interior_styles():
       logger.warning(f'Skipping interior style with invalid image URL at {idx}')
       continue
 
+    base_metadata = {
+      "type": "interior_style",
+      "source": "interiorStyles.json",
+      "interior_style_id": interior_style_id,
+      "interior_style_name": interior_style_name,
+      "interior_style_slug": interior_style_slug,
+      "created_at": datetime.now(timezone.utc).isoformat(),
+      'language': 'vi'
+    }
+
     text_parts = [
       f'Loại kiến trúc: {interior_style_name}',
       f'Hình ảnh minh họa kiến trúc {interior_style_name}: {interior_style_image}'
@@ -66,16 +76,11 @@ def chunk_interior_styles():
     
     chunks.append({
       "text": "\n".join(text_parts),
-      "metadata": make_metadata({
-        "type": "interior_style",
-        "source": "interiorStyles.json",
-        "interior_style_id": interior_style_id,
-        "interior_style_name": interior_style_name,
-        "interior_style_slug": interior_style_slug,
-        "interior_style_image": interior_style_image,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        'language': 'vi'
-      })
+      "metadata": make_metadata(
+        base_metadata,
+        chunk_type = 'definition',
+        priority = 3
+      )
     })
 
   if not chunks:

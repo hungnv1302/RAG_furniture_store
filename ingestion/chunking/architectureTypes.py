@@ -1,8 +1,10 @@
 import json 
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 
 from core.load_settings import load_settings
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -48,15 +50,24 @@ def chunk_architecture_types():
     architecture_id = architecture_type.get("id")
     architecture_name = architecture_type.get("name", "")
     architecture_slug = architecture_type.get("slug")
-    architecture_description = architecture_type.get("description")
     architecture_image = architecture_type.get("imageUrl", "")
 
-    if not architecture_name or not isinstance(architecture_name, str):
+    if not architecture_name:
       logger.warning(f'Skipping architecture type with invalid name at {idx}')
       continue
-    if not architecture_image or not isinstance(architecture_image, str):
+    if not architecture_image:
       logger.warning(f'Skipping architecture type with invalid image URL at {idx}')
       continue
+
+    base_metadata = {
+      "type": "architecture_type",
+      "source": "architectureTypes.json",
+      "architecture_id": architecture_id,
+      "architecture_name": architecture_name,
+      "architecture_slug": architecture_slug,
+      "created_at": datetime.now(timezone.utc).isoformat(),
+      "language": "vi"
+    }
 
     text_parts = [
       f'Loại kiến trúc: {architecture_name}',
@@ -65,15 +76,11 @@ def chunk_architecture_types():
     
     chunks.append({
       "text": "\n".join(text_parts),
-      "metadata":{
-        "type": "architecture_type",
-        "source": "architectureTypes.json",
-        "architecture_id": architecture_id,
-        "architecture_name": architecture_name,
-        "architecture_slug": architecture_slug,
-        "architecture_description": architecture_description,
-        "architecture_image": architecture_image
-      }
+      "metadata": make_metadata(
+        base_metadata,
+        chunk_type = 'definition',
+        priority = 3
+      )
     })
 
   if not chunks:

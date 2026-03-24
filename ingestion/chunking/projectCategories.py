@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 from core.load_settings import load_settings
-from ingestion.helper import make_metadata
+from ingestion.helpers import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -55,6 +55,16 @@ def chunk_project_categories():
       logger.warning(f'Skipping project category with invalid name at {idx}')
       continue
 
+    base_metadata = {
+      'type': 'project_category',
+      'source': 'projectCategories.json',
+      'category_id': category_id,
+      'category_name': category_name,
+      'category_slug': category_slug,
+      'created_at': datetime.now(timezone.utc).isoformat(),
+      'language': 'vi'
+    }
+
     text_parts = [
       f'Tên loại dự án: {category_name}',
       f'Loại dự án này được dùng để phân loại các dự án liên quan đến {category_name}'
@@ -62,15 +72,11 @@ def chunk_project_categories():
     
     chunks.append({
       "text": "\n".join(text_parts),
-      "metadata": make_metadata({
-        "type": "project_category",
-        "source": "projectCategories.json",
-        "category_id": category_id,
-        "category_name": category_name,
-        "category_slug": category_slug,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "language": 'vi'
-      })
+      "metadata": make_metadata(
+        base_metadata,
+        chunk_type = 'definition',
+        priority = 3
+      )
     })
 
   return chunks

@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 from core.load_settings import load_settings
-from ingestion.helper.make_metadata import make_metadata
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger('ingestion')
@@ -71,9 +71,9 @@ def chunk_projects():
     CHUNK_PRIORITY = {
       'overview_title': 1,
       'overview_description': 2,
-      'overview_location_investor': 3,
-      'overview_specs': 4,
-      'overview_architecture_interior': 5
+      'overview_architecture_interior': 3,
+      'overview_location_investor': 4,
+      'overview_specs': 5,
     }
 
     if project_title:

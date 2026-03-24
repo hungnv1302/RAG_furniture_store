@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
 from core.load_settings import load_settings
-from ingestion.helper.make_metadata import make_metadata
-from ingestion.helper.split_paragraphs import split_paragraph
+from ingestion.helpers.make_metadata import make_metadata
+from ingestion.helpers.split_paragraphs import split_paragraph
 
 def html_to_text(html: str) -> str:
   soup = BeautifulSoup(html, "html.parser")
