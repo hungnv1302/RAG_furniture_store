@@ -4,7 +4,7 @@ from core.setup_logging import setup_logging
 from core.load_settings import load_settings
 from ingestion.chunking.architectureTypes import chunk_architecture_types
 from ingestion.chunking.companyInfo import chunk_company_info
-from ingestion.chunking.heroSlides import chunk_hero_slides
+# from ingestion.chunking.heroSlides import chunk_hero_slides
 from ingestion.chunking.interiorStyles import chunk_interior_styles
 from ingestion.chunking.news import chunk_news
 from ingestion.chunking.newsCategories import chunk_news_categories
@@ -21,7 +21,7 @@ def upload_chunks():
 
   all_chunks.extend(chunk_architecture_types())
   all_chunks.extend(chunk_company_info())
-  all_chunks.extend(chunk_hero_slides())
+  # all_chunks.extend(chunk_hero_slides())
   all_chunks.extend(chunk_interior_styles())
   all_chunks.extend(chunk_news())
   all_chunks.extend(chunk_news_categories())

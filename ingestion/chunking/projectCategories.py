@@ -1,8 +1,10 @@
 import json 
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 
 from core.load_settings import load_settings
+from ingestion.helper import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -45,32 +47,31 @@ def chunk_project_categories():
       logger.warning(f'Skipping invalid project category at index {idx}')
       continue
 
-    project_category_id = project_category.get("id")
-    project_category_name = project_category.get("name", "")
-    project_category_slug = project_category.get("slug")
-    project_category_description = project_category.get("description")
+    category_id = project_category.get("id")
+    category_name = project_category.get("name", "")
+    category_slug = project_category.get("slug")
 
-    if not project_category_name or not isinstance(project_category_name, str):
+    if not category_name:
       logger.warning(f'Skipping project category with invalid name at {idx}')
       continue
 
     text_parts = [
-      f'Loại dự án: {project_category_name}'
+      f'Tên loại dự án: {category_name}',
+      f'Loại dự án này được dùng để phân loại các dự án liên quan đến {category_name}'
     ]
     
     chunks.append({
       "text": "\n".join(text_parts),
-      "metadata":{
+      "metadata": make_metadata({
         "type": "project_category",
         "source": "projectCategories.json",
-        "project_category_id": project_category_id,
-        "project_category_name": project_category_name,
-        "project_category_slug": project_category_slug,
-        "project_category_description": project_category_description
-      }
+        "category_id": category_id,
+        "category_name": category_name,
+        "category_slug": category_slug,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "language": 'vi'
+      })
     })
 
-  if not chunks:
-    logger.warning("No valid project category chunks were created")
   return chunks
 

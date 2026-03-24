@@ -1,8 +1,10 @@
 import json 
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 
 from core.load_settings import load_settings
+from ingestion.helper.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
@@ -45,32 +47,29 @@ def chunk_news_categories():
       logger.warning(f'Skipping invalid news category at index {idx}')
       continue
 
-    news_category_id = news_category.get("id")
-    news_category_name = news_category.get("name", "")
-    news_category_slug = news_category.get("slug")
-    news_category_description = news_category.get("description")
+    category_id = news_category.get("id")
+    category_name = news_category.get("name", "")
+    category_slug = news_category.get("slug")
 
-    if not news_category_name or not isinstance(news_category_name, str):
-      logger.warning(f'Skipping news category with invalid name at {idx}')
-      continue
+    if not category_name:
+      logger.warning(f'Skipping news category with missing name at index {idx}')
 
     text_parts = [
-      f'Loại tin tức: {news_category_name}'
+      f'Tên danh mục tin tức: {category_name}',
+      f'Danh mục này được dùng để phân loại các bài viết liên quan đến {category_name}.'
     ]
-    
-    chunks.append({
-      "text": "\n".join(text_parts),
-      "metadata":{
-        "type": "news_category",
-        "source": "newsCategories.json",
-        "news_category_id": news_category_id,
-        "news_category_name": news_category_name,
-        "news_category_slug": news_category_slug,
-        "news_category_description": news_category_description
-      }
-    })
 
-  if not chunks:
-    logger.warning("No valid news category chunks were created")
+    chunks.append({
+      'text': '\n'.join(text_parts),
+      'metadata': make_metadata ({
+        'type': 'news_category',
+        'source': 'newsCategories.json',
+        'category_id': category_id,
+        'category_name': category_name,
+        'category_slug': category_slug,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'language': 'vi'
+      })
+    })
   return chunks
 

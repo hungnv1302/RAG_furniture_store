@@ -1,7 +1,7 @@
 import logging
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core.load_settings import load_settings
 from ingestion.helper.make_metadata import make_metadata
@@ -64,7 +64,7 @@ def chunk_projects():
       "project_id": project_id,
       "project_title": project_title,
       "project_slug": project_slug,
-      "created_at": datetime.now(datetime.timezone.utc).isoformat(),
+      "created_at": datetime.now(timezone.utc).isoformat(),
       "language": "vi"
     }
 
