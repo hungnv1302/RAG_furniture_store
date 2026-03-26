@@ -1,0 +1,52 @@
+import logging
+import math
+from collections import Counter
+
+from embedding.sparse_embedder import tokenize, SparseEmbedder
+
+logger = logging.getLogger('scoring')
+
+class BM25:
+  def __init__(self, sparse_embedder: SparseEmbedder, k1: float = 1.5, b: float = 0.75):
+    self.sparse_embedder = sparse_embedder
+    self.k1 = k1
+    self.b = b
+    self.num_documents = sparse_embedder.num_documents
+    self.average_document_length = None
+
+  def compute_average_document_length(self, documents: list[str]):
+    total_length = 0
+    valid_documents = 0
+
+    for document in documents:
+      tokens = tokenize(document)
+      if not tokens:
+        logger.warning('Empty document encountered while computing average document length')
+        continue
+      total_length += len(tokens)
+      valid_documents += 1
+
+    if valid_documents == 0:
+      logger.error('No valid documents to compute average document length')
+      self.average_document_length = 0.0
+      return
+    
+    self.average_document_length = total_length / max(valid_documents, 1)
+    logger.debug(f'Computed average document length: {self.average_document_length}')
+
+  def score(self, query: str, document: str) -> float:
+    if not query or not document:
+      logger.warning('Empty query or document provided for scoring')
+      return 0.0
+    
+    if self.average_document_length is None:
+      logger.error('Average document length not computed. Call compute_average_document_length first')
+      return 0.0
+    
+    query_terms = tokenize(query)
+    document_terms = tokenize(document)
+    document_length = len(document_terms)
+    term_frequency_document = Counter(document_terms)
+    score = 0.0
+
+    
