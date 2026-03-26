@@ -47,6 +47,11 @@ loggers:
     level: INFO
     handlers: [console, file]
     propagate: no
+  
+  scoring:
+    level: DEBUG
+    handlers: [console, file]
+    propagate: no
 
   retrieval:
     level: INFO
