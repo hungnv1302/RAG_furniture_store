@@ -2,6 +2,8 @@ import logging
 import math
 from collections import Counter
 
+from torch import inverse
+
 from embedding.sparse_embedder import tokenize, SparseEmbedder
 
 logger = logging.getLogger('scoring')
@@ -49,4 +51,26 @@ class BM25:
     term_frequency_document = Counter(document_terms)
     score = 0.0
 
-    
+    for term in set(query_terms):
+      if term not in self.sparse_embedder.vocabulary:
+        logger.debug(f"Term '{term}' not found in vocabulary during scoring. Skipping")
+        continue
+
+      document_frequency = self.sparse_embedder.document_frequency.get(term, 0)
+      if document_frequency == 0:
+        logger.debug(f"Term '{term}' has zero document frequency. Skipping")
+        continue
+
+      inverse_document_frequency = math.log((self.num_documents - document_frequency + 0.5)/(document_frequency + 0.5) + 1)
+
+      term_frequency = term_frequency_document.get(term, 0)
+      
+      numerator = term_frequency * (self.k1 + 1)
+      denominator = term_frequency + self.k1 * (1- self.b + self.b * (document_length/self.average_document_length))
+
+      score += inverse_document_frequency * (numerator / denominator)
+
+    return score
+  
+  def score_batch(self, query: str, documents: list[str]) -> list[float]:
+    return [self.score(query, document) for document in documents]
