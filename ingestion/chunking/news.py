@@ -58,7 +58,7 @@ def chunk_news():
     news_excerpt = news_item.get('excerpt', '')
     news_content = news_item.get('content', '')
     news_content_text = html_to_text(news_content)
-    news_content_spilt = split_paragraph(news_content_text)
+    news_content_spilt = split_paragraph(news_content_text, 400)
     news_image = news_item.get('thumbnailUrl')
     news_category = news_item.get('category', {})
 

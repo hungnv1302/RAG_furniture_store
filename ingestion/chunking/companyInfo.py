@@ -95,7 +95,7 @@ def chunk_company_info():
       if company_main_address:
         text_parts.append(f'Địa chỉ chính: {company_main_address}')
       chunks.append({
-        'text': text_parts,
+        'text': '\n'.join(text_parts),
         'metadata': make_metadata(base_metadata, chunk_type='contact_details', priority=CHUNK_PRIORITY["contact_details"])
       })
     
@@ -106,7 +106,7 @@ def chunk_company_info():
       if company_social_links:
         text_parts.append(f'Mạng xã hội: {company_social_text}')
       chunks.append({
-        'text': text_parts,
+        'text': '\n'.join(text_parts),
         'metadata': make_metadata(base_metadata, chunk_type='social_links', priority=CHUNK_PRIORITY['social_links'])
       })
 
@@ -117,7 +117,7 @@ def chunk_company_info():
       if company_total_projects:
         text_parts.append(f'Tổng số dự án: {company_total_projects}')
       chunks.append({
-        'text': text_parts,
+        'text': '\n'.join(text_parts),
         'metadata': make_metadata(base_metadata, chunk_type='additional_info', priority=CHUNK_PRIORITY['additional_info'])
       })
     

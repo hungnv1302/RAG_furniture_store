@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 from core.load_settings import load_settings
-from ingestion.helpers import make_metadata
+from ingestion.helpers.make_metadata import make_metadata
 
 settings = load_settings()
 logger = logging.getLogger("ingestion")
