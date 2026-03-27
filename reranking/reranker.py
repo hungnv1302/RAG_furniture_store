@@ -15,7 +15,7 @@ class CrossEncoderReranker(BaseReranker):
       logger.info('No documents to rerank')
       return []
     
-    pairs = [(query, documents.text) for document in documents]
+    pairs = [(query, document.text) for document in documents]
     
     scores = self.model.rerank(pairs)
 
