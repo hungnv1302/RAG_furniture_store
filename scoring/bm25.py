@@ -2,8 +2,6 @@ import logging
 import math
 from collections import Counter
 
-from torch import inverse
-
 from embedding.sparse_embedder import tokenize, SparseEmbedder
 
 logger = logging.getLogger('scoring')
