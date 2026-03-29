@@ -1,6 +1,6 @@
 import logging 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+from qdrant_client.models import Distance, VectorParams, SparseVectorParams, SparseIndexParams
 
 from core.load_settings import load_settings
 
@@ -58,9 +58,16 @@ def ensure_collection(client: QdrantClient):
   logger.info(f"Creating collection '{VECTOR_DB_COLLECTION}'...")
   client.recreate_collection(
     collection_name= VECTOR_DB_COLLECTION,
-    vectors_config=VectorParams(
-      size = VECTOR_DB_SIZE,
-      distance = Distance[VECTOR_DB_DISTANCE.upper()]
-    )
+    vectors_config={
+      'dense': VectorParams(
+        size=VECTOR_DB_SIZE,
+        distance=Distance[VECTOR_DB_DISTANCE.upper()]
+      )
+    },
+    sparse_vectors_config={
+      'sparse': SparseVectorParams(
+        index = SparseIndexParams()
+      )
+    }
   )  
   logger.info(f"Collection '{VECTOR_DB_COLLECTION}' created successfully")

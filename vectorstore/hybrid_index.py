@@ -3,6 +3,7 @@ import uuid
 
 from embedding.embed_texts import embed_texts
 from embedding.sparse_embedder import SparseEmbedder
+from qdrant_client.models import PointStruct, SparseVector
 
 logger = logging.getLogger('vector_database')
 
@@ -31,18 +32,21 @@ def build_hybrid_qdrant_points(chunks: list[dict]) -> list[dict]:
   points = []
 
   for chunk, dense_vector, sparse_vector in zip(chunks, dense_embeddings, sparse_embeddings):
-    points.append({
-      'id': str(uuid.uuid4()),
-      'vector': dense_vector,
-      'sparse_vector': {
-        'indices': sparse_vector['indices'].tolist(),
-        'values': sparse_vector['values'].tolist()
+    point = PointStruct(
+      id = chunk.get('metadata', {}).get('chunk_id', str(uuid.uuid4())),
+      vector = {
+        'dense': dense_vector.tolist() if hasattr(dense_vector, 'tolist') else dense_vector,
+        'sparse': SparseVector(
+          indices=sparse_vector['indices'],
+          values = sparse_vector['values']
+        ),
       },
-      'payload':{
+      payload={
         'text': chunk['text'],
         **chunk.get('metadata', {})
       }
-    })
+    )
+    points.append(point)
 
   logger.info(f'Build {len(points)} Qdrant points')
   return points

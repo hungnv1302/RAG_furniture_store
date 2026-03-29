@@ -2,8 +2,10 @@ import logging
 from qdrant_client import QdrantClient
 
 from core.load_settings import load_settings
+from embedding.sparse_embedder import SparseEmbedder
 from vectorstore.qdrant import get_qdrant_client, ensure_collection
-from vectorstore.index import build_qdrant_points
+# from vectorstore.index import build_qdrant_points
+from vectorstore.hybrid_index import build_hybrid_qdrant_points, init_sparse_embedder
 
 settings = load_settings()
 logger = logging.getLogger('vector_database')
@@ -18,7 +20,15 @@ def upsert_chunks(chunks: list[dict]):
   
   client: QdrantClient = get_qdrant_client()
   ensure_collection(client)
-  points = build_qdrant_points(chunks)
+
+  logger.info('Fitting sparse embedder with corpus...')
+  texts = [chunk['text'] for chunk in chunks]
+  sparse_embedder = SparseEmbedder()
+  sparse_embedder.fit(texts)
+  init_sparse_embedder(sparse_embedder)
+  logger.info(f'Sparse embedder fitted with vocabulary size: {len(sparse_embedder.vocabulary)}')
+
+  points = build_hybrid_qdrant_points(chunks)
 
   if not points:
     logger.warning('No points were build from the provided chunks')
